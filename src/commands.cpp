@@ -1,6 +1,4 @@
-/*
-    Implementa comandos   
-*/
+#include "commands.hpp"
 
 void init() {
     //TODO: init - inicializar o sistema de arquivos com as estruturas de dados, semelhante a formatar o sistema de arquivos virtual
