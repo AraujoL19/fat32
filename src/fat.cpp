@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <fstream>
 
 #define BYTES_PER_SECTOR 512 //512 bytes, tamanho tradicional de um setor em sistemas de arquivos, menor bloco de leitura/escrita possível em discos
 #define SECTORS_PER_CLUSTER 8 //4096 bytes por cluster (4 KB), que é o valor comum em sistemas FAT32
