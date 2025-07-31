@@ -1,4 +1,4 @@
-#include "../include/commands.hpp"
+#include "../include/shell.hpp"
 
 void init() {
     //TODO: init - inicializar o sistema de arquivos com as estruturas de dados, semelhante a formatar o sistema de arquivos virtual
