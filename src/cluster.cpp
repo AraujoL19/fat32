@@ -1,4 +1,3 @@
-// cluster.cpp
 #include "cluster.hpp"
 #include <iostream>
 
