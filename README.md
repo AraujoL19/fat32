@@ -41,3 +41,19 @@ Essa tabela é essencialmente um vetor de inteiros, onde cada entrada aponta par
 ```
 g++ -std=c++17 -Iinclude src/*.cpp -o build/fat32 && ./build/fat32
 ```
+
+## Comandos Disponíveis
+
+No prompt `FAT32>`, você pode usar os seguintes comandos:
+
+| Comando                  | Descrição                                                    |
+|--------------------------|--------------------------------------------------------------|
+| `ls`                     | Lista os arquivos e diretórios no diretório atual.           |
+| `mkdir <nome>`           | Cria um novo diretório com o nome especificado.              |
+| `touch <nome>`           | Cria um novo arquivo vazio com o nome especificado.          |
+| `write <nome> <conteúdo>`| Escreve `<conteúdo>` no arquivo `<nome>`. Sobrescreve o arquivo se ele já existir. |
+| `read <nome>`            | Lê e exibe o conteúdo do arquivo especificado.               |
+| `rm <nome>`              | Remove o arquivo especificado.                                |
+| `cd <nome>`              | Entra no diretório `<nome>`. (Navegação para diretórios filhos.) |
+| `cd ..`                  | Ainda não implementado (voltar para o diretório pai).        |
+| `exit`                   | Sai do shell.                                                |
