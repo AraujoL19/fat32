@@ -1,4 +1,3 @@
-// cluster.hpp
 #ifndef CLUSTER_HPP
 #define CLUSTER_HPP
 
