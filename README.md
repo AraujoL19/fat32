@@ -10,7 +10,7 @@ Grupo:
 - Mateus Lopes Felicio
 - Thales Gomes Batista
 
-Como base para o desenvolvimento foi utilizado um repositório base disponível em: [text](https://github.com/PUCRSOpenSource/tiny-shell/tree/master).
+Como base para o desenvolvimento foi utilizado um repositório base disponível [aqui](https://github.com/PUCRSOpenSource/tiny-shell/tree/master).
 
 ## FAT (File Allocation Table)
 
