@@ -6,7 +6,9 @@
 #include <sstream>
 #include <vector>
 
-static uint16_t current_cluster = 9; // Root
+static std::vector<uint16_t> cluster_stack = {9}; // pilha de diretórios; começa no root
+
+uint16_t& current_cluster = cluster_stack.back(); // referência sempre para o cluster atual
 
 void shell_loop() {
     std::string command;
@@ -108,12 +110,15 @@ void shell_loop() {
             }
 
             if (name == "..") {
-                std::cout << "cd .. ainda não implementado.\n";
-                // Sugestão futura: manter uma pilha de clusters para navegação reversa.
+                if(cluster_stack.size() > 1){
+                    cluster_stack.pop_back();
+                }else{
+                    std::cout<<"Você já está no diretório raiz/\n";
+                }
             } else {
                 auto entry = find_entry(name, current_cluster);
                 if (entry && entry->attributes == 0x01) {
-                    current_cluster = entry->first_block;
+                    cluster_stack.push_back(entry->first_block);
                 } else {
                     std::cerr << "Diretório não encontrado ou não é um diretório.\n";
                 }
