@@ -56,28 +56,28 @@ std::optional<DirEntry> find_entry(const std::string& name, uint16_t cluster_id)
     return std::nullopt;
 }
 
-bool add_entry_to_directory(const DirEntry& entry, uint16_t cluster_id) {
+bool add_entry_to_directory(const DirEntry& entry, uint16_t cluster_index) {
     DataCluster cluster;
-    load_cluster(cluster_id, cluster);
+    load_cluster(cluster_index, cluster);
 
     for (DirEntry& dir_entry : cluster.dir) {
         if (dir_entry.filename[0] == '\0') {
             dir_entry = entry;
-            write_cluster(cluster_id, cluster);
+            write_cluster(cluster_index, cluster);
             return true;
         }
     }
     return false;
 }
 
-bool remove_entry_from_directory(const std::string& name, uint16_t cluster_id) {
+bool remove_entry_from_directory(const std::string& name, uint16_t cluster_index) {
     DataCluster cluster;
-    load_cluster(cluster_id, cluster);
+    load_cluster(cluster_index, cluster);
 
     for (DirEntry& entry : cluster.dir) {
         if (std::strncmp(entry.filename, name.c_str(), sizeof(entry.filename)) == 0) {
             std::memset(&entry, 0, sizeof(DirEntry));
-            write_cluster(cluster_id, cluster);
+            write_cluster(cluster_index, cluster);
             return true;
         }
     }
