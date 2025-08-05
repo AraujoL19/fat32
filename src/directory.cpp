@@ -19,13 +19,11 @@ bool create_directory(const std::string& dirname, uint16_t parent_cluster) {
 
     new_dir.first_block = static_cast<uint16_t>(new_cluster);
 
-    // Escreve a entrada no diretório pai
     if (!add_entry_to_directory(new_dir, parent_cluster)) {
         std::cerr << "Erro: Falha ao adicionar entrada no diretório pai.\n";
         return false;
     }
 
-    // Inicializa cluster do novo diretório com entradas vazias
     DataCluster cluster = {};
     write_cluster(new_cluster, cluster);
     return true;
@@ -67,6 +65,7 @@ bool add_entry_to_directory(const DirEntry& entry, uint16_t cluster_index) {
             return true;
         }
     }
+    std::cerr << "Erro: Diretório cheio. Não foi possível adicionar entrada.\n";
     return false;
 }
 

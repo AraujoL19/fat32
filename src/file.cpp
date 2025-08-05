@@ -5,7 +5,7 @@
 #include <cstring>
 #include <iostream>
 
-bool create_file(const std::string& filename, int parent_cluster) {
+bool create_file(const std::string& filename, uint16_t parent_cluster) {
     if (find_entry(filename, parent_cluster).has_value()) {
         std::cerr << "Arquivo já existe.\n";
         return false;
@@ -29,7 +29,7 @@ bool create_file(const std::string& filename, int parent_cluster) {
     return add_entry_to_directory(file_entry, parent_cluster);
 }
 
-bool write_file(const std::string& filename, const std::vector<char>& data, int parent_cluster) {
+bool write_file(const std::string& filename, const std::vector<char>& data, uint16_t parent_cluster) {
     auto opt_entry = find_entry(filename, parent_cluster);
     if (!opt_entry.has_value()) {
         std::cerr << "Arquivo não encontrado.\n";
@@ -37,40 +37,41 @@ bool write_file(const std::string& filename, const std::vector<char>& data, int 
     }
 
     DirEntry entry = opt_entry.value();
-    int current_cluster = entry.first_block;
+    int current = entry.first_block;
 
     // Limpa os clusters anteriores
-    while (fat[current_cluster] != 0xFFFF) {
-        int next = fat[current_cluster];
-        fat[current_cluster] = 0x0000;
-        current_cluster = next;
+    while (fat[current] != 0xFFFF) {
+        int next = fat[current];
+        fat[current] = 0x0000;
+        current = next;
     }
+    fat[current] = 0x0000; // limpa o último
 
-    // Grava os novos dados
+    // Grava novos dados
     size_t bytes_written = 0;
-    int previous_cluster = -1;
     int first_cluster = -1;
+    int previous_cluster = -1;
 
     while (bytes_written < data.size()) {
-        int cluster_index = find_free_fat_block();
-        if (cluster_index == -1) {
+        int new_cluster = find_free_fat_block();
+        if (new_cluster == -1) {
             std::cerr << "Erro: espaço insuficiente.\n";
             return false;
         }
 
         if (first_cluster == -1)
-            first_cluster = cluster_index;
+            first_cluster = new_cluster;
 
         if (previous_cluster != -1)
-            fat[previous_cluster] = cluster_index;
+            fat[previous_cluster] = new_cluster;
 
         DataCluster cluster = {};
-        size_t to_write = std::min((size_t)CLUSTER_SIZE, data.size() - bytes_written);
+        size_t to_write = std::min(static_cast<size_t>(CLUSTER_SIZE), data.size() - bytes_written);
         std::memcpy(cluster.data, data.data() + bytes_written, to_write);
-        write_cluster(cluster_index, cluster);
+        write_cluster(new_cluster, cluster);
 
         bytes_written += to_write;
-        previous_cluster = cluster_index;
+        previous_cluster = new_cluster;
     }
 
     fat[previous_cluster] = 0xFFFF;
@@ -78,20 +79,20 @@ bool write_file(const std::string& filename, const std::vector<char>& data, int 
     entry.first_block = static_cast<uint16_t>(first_cluster);
     entry.size = data.size();
 
-    // Atualiza entrada
+    // Atualiza entrada no diretório
     remove_entry_from_directory(filename, parent_cluster);
     add_entry_to_directory(entry, parent_cluster);
-
     save_fat();
+
     return true;
 }
 
-std::optional<std::vector<char>> read_file(const std::string& filename, int parent_cluster) {
+std::optional<std::vector<char>> read_file(const std::string& filename, uint16_t parent_cluster) {
     auto opt_entry = find_entry(filename, parent_cluster);
     if (!opt_entry.has_value()) return std::nullopt;
 
     DirEntry entry = opt_entry.value();
-    std::vector<char> result;
+    std::vector<char> buffer;
     int current = entry.first_block;
     size_t total = 0;
 
@@ -99,24 +100,23 @@ std::optional<std::vector<char>> read_file(const std::string& filename, int pare
         DataCluster cluster;
         load_cluster(current, cluster);
 
-        size_t to_read = std::min((size_t)CLUSTER_SIZE, entry.size - total);
-        result.insert(result.end(), cluster.data, cluster.data + to_read);
-
+        size_t to_read = std::min(static_cast<size_t>(CLUSTER_SIZE), entry.size - total);
+        buffer.insert(buffer.end(), cluster.data, cluster.data + to_read);
         total += to_read;
+
         current = fat[current];
     }
 
-    return result;
+    return buffer;
 }
 
-bool delete_file(const std::string& filename, int parent_cluster) {
+bool delete_file(const std::string& filename, uint16_t parent_cluster) {
     auto opt_entry = find_entry(filename, parent_cluster);
     if (!opt_entry.has_value()) return false;
 
     DirEntry entry = opt_entry.value();
     int current = entry.first_block;
 
-    // Libera clusters da FAT
     while (current != 0xFFFF) {
         int next = fat[current];
         fat[current] = 0x0000;
