@@ -38,6 +38,7 @@ Essa tabela é essencialmente um vetor de inteiros, onde cada entrada aponta par
     - Cada arquivo/diretório ocupa um ou mais clusters.
 
 ### Compilar e rodar
+O código deve ser compilado em ambiente Linux
 ```
 g++ -std=c++17 -Iinclude src/*.cpp -o build/fat32 && ./build/fat32
 ```
