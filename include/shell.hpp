@@ -7,10 +7,10 @@
 void init();
 
 //TODO: load - carregar o sistema de arquivos do disco
-void load();
+void load(const std::string& imagePath);
 
 //TODO:  ls [/caminho/diretorio] - listar diretório
-void ls();
+void ls(const std::string& imagePath);
 
 //TODO: mkdir [/caminho/diretorio] - criar diretório
 void mkdir();
