@@ -1,4 +1,5 @@
 #include "fat_manager.hpp"
+#include "fat.hpp"
 #include <fstream>
 #include <cstring>
 #include <iostream>
