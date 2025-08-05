@@ -2,6 +2,7 @@
 #include <string>
 #include <iomanip>
 #include <iostream>
+#include <algorithm>
 
 //TODO: init - inicializar o sistema de arquivos com as estruturas de dados, semelhante a formatar o sistema de arquivos virtual
 void init();
@@ -28,4 +29,4 @@ void write();
 void append();
 
 //TODO: read [/caminho/arquivo] - ler o conteúdo de um arquivo
-void read();
+void read(const std::string& imagePath, const std::string& filename);
