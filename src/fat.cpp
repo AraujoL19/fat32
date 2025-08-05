@@ -1,21 +1,59 @@
-#include "../include/fat.hpp"
+#include "fat.hpp"
+#include <array>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <iostream>
 
-#define BYTES_PER_SECTOR 512 //512 bytes, tamanho tradicional de um setor em sistemas de arquivos, menor bloco de leitura/escrita possível em discos
-#define SECTORS_PER_CLUSTER 8 //4096 bytes por cluster (4 KB), que é o valor comum em sistemas FAT32
-#define RESERVED_SECTORS 32 //setores reservados no início da partição para informações do sistema
-#define NUM_FATS 2 //FAT32 mantém duas cópias da tabela de alocação para redundância e recuperação de erros
-#define SECTORS_PER_FAT 64 //tamanho da FAT, Ex: 64 x 512 bytes = 32 KB por FAT
-#define ROOT_DIR_CLUSTER 2 //por padrão, o primeiro cluster de dados disponível no diretório é o número 2
-#define TOTAL_SECTORS 4096 //tamanho total do disco, Ex: 4096 x 512 B = 2 MB simulados
+std::array<uint16_t, NUM_CLUSTERS> fat = {};
+std::array<uint8_t, CLUSTER_SIZE> boot_block = {};
 
-void FatSystem::init() {
-    //TODO: verifica se o disco existe, inicializa (load) ou se não existir cria (create)
+void init_fs() {
+    std::ofstream file(FAT_FILENAME, std::ios::binary | std::ios::trunc);
+
+    std::fill(boot_block.begin(), boot_block.end(), 0xbb);
+    file.write(reinterpret_cast<char*>(boot_block.data()), boot_block.size());
+
+    fat[0] = 0xfffd;
+    for (int i = 1; i < 9; ++i) fat[i] = 0xfffe;
+    fat[9] = 0xffff;
+    for (int i = 10; i < NUM_CLUSTERS; ++i) fat[i] = 0x0000;
+
+    file.write(reinterpret_cast<char*>(fat.data()), fat.size() * sizeof(uint16_t));
+
+    // root dir vazio
+    DirEntry root_dir[32] = {};
+    file.write(reinterpret_cast<char*>(root_dir), sizeof(root_dir));
+
+    // clusters vazios
+    DataCluster empty = {};
+    for (int i = 0; i < NUM_CLUSTERS - 10; ++i)
+        file.write(reinterpret_cast<char*>(&empty), sizeof(DataCluster));
+
+    file.close();
 }
 
-void FatSystem::create() {
-    //TODO: cria 
+void load_fat() {
+    std::ifstream file(FAT_FILENAME, std::ios::binary);
+    file.seekg(CLUSTER_SIZE);
+    file.read(reinterpret_cast<char*>(fat.data()), fat.size() * sizeof(uint16_t));
+    file.close();
 }
 
-void FatSystem::load() {
-    //TODO: carrega 
+void save_fat() {
+    std::fstream file(FAT_FILENAME, std::ios::binary | std::ios::in | std::ios::out);
+    file.seekp(CLUSTER_SIZE);
+    file.write(reinterpret_cast<char*>(fat.data()), fat.size() * sizeof(uint16_t));
+    file.close();
+}
+
+int find_free_fat_block() {
+    for (int i = 10; i < NUM_CLUSTERS; ++i) {
+        if (fat[i] == 0x0000) {
+            fat[i] = 0xffff;
+            save_fat();
+            return i;
+        }
+    }
+    return -1;
 }
