@@ -6,15 +6,26 @@
 #include <sstream>
 #include <vector>
 
-static std::vector<uint16_t> cluster_stack = {9}; // pilha de diretórios; começa no root
+static std::vector<std::pair<std::string, uint16_t>> dir_stack = {{"", 9}}; // "" representa a raiz
 
-uint16_t& current_cluster = cluster_stack.back(); // referência sempre para o cluster atual
+uint16_t& current_cluster = dir_stack.back().second;
+
+std::string get_current_path() {
+    std::string path = "/";
+    for (size_t i = 1; i < dir_stack.size(); ++i) {
+        path += dir_stack[i].first;
+        if (i < dir_stack.size() - 1)
+            path += "/";
+    }
+    return path;
+}
+
 
 void shell_loop() {
     std::string command;
 
     while (true) {
-        std::cout << "FAT32> ";
+        std::cout << "FAT32:" << get_current_path() << "> ";
         std::getline(std::cin, command);
 
         std::istringstream iss(command);
@@ -110,15 +121,15 @@ void shell_loop() {
             }
 
             if (name == "..") {
-                if(cluster_stack.size() > 1){
-                    cluster_stack.pop_back();
+                if(dir_stack.size() > 1){
+                    dir_stack.pop_back();
                 }else{
                     std::cout<<"Você já está no diretório raiz/\n";
                 }
             } else {
                 auto entry = find_entry(name, current_cluster);
                 if (entry && entry->attributes == 0x01) {
-                    cluster_stack.push_back(entry->first_block);
+                    dir_stack.emplace_back(name, entry->first_block);
                 } else {
                     std::cerr << "Diretório não encontrado ou não é um diretório.\n";
                 }

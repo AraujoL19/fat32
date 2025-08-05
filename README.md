@@ -55,5 +55,5 @@ No prompt `FAT32>`, você pode usar os seguintes comandos:
 | `read <nome>`            | Lê e exibe o conteúdo do arquivo especificado.               |
 | `rm <nome>`              | Remove o arquivo especificado.                                |
 | `cd <nome>`              | Entra no diretório `<nome>`. (Navegação para diretórios filhos.) |
-| `cd ..`                  | Ainda não implementado (voltar para o diretório pai).        |
+| `cd ..`                  | Voltar para o diretório pai.        |
 | `exit`                   | Sai do shell.                                                |
