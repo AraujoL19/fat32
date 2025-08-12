@@ -6,7 +6,7 @@
 #include <sstream>
 #include <vector>
 
-static std::vector<std::pair<std::string, uint16_t>> dir_stack = {{"", 9}}; // "" representa a raiz
+static std::vector<std::pair<std::string, uint16_t>> dir_stack = {{"", 9}}; // raiz
 
 uint16_t& current_cluster = dir_stack.back().second;
 
@@ -19,7 +19,6 @@ std::string get_current_path() {
     }
     return path;
 }
-
 
 void shell_loop() {
     std::string command;
@@ -74,10 +73,8 @@ void shell_loop() {
                 std::cerr << "Uso: write <nome> <conteúdo>\n";
                 continue;
             }
-
-            if (!content.empty() && content[0] == ' ') content = content.substr(1); // remove espaço inicial
+            if (!content.empty() && content[0] == ' ') content = content.substr(1);
             std::vector<char> data(content.begin(), content.end());
-
             if (!write_file(name, data, current_cluster)) {
                 std::cerr << "Erro ao escrever no arquivo.\n";
             }
@@ -90,7 +87,6 @@ void shell_loop() {
                 std::cerr << "Uso: read <nome>\n";
                 continue;
             }
-
             auto data = read_file(name, current_cluster);
             if (data) {
                 std::cout << std::string(data->begin(), data->end()) << "\n";
@@ -106,7 +102,6 @@ void shell_loop() {
                 std::cerr << "Uso: rm <nome>\n";
                 continue;
             }
-
             if (!delete_file(name, current_cluster)) {
                 std::cerr << "Erro ao remover arquivo.\n";
             }
@@ -121,15 +116,19 @@ void shell_loop() {
             }
 
             if (name == "..") {
-                if(dir_stack.size() > 1){
+                if (dir_stack.size() > 1) {
                     dir_stack.pop_back();
-                }else{
-                    std::cout<<"Você já está no diretório raiz/\n";
+                } else {
+                    std::cout << "Você já está no diretório raiz/\n";
                 }
             } else {
                 auto entry = find_entry(name, current_cluster);
                 if (entry && entry->attributes == 0x01) {
-                    dir_stack.emplace_back(name, entry->first_block);
+                    if (entry->first_block < NUM_CLUSTERS && fat[entry->first_block] != 0x0000) {
+                        dir_stack.emplace_back(name, entry->first_block);
+                    } else {
+                        std::cerr << "Diretório corrompido ou cluster inválido.\n";
+                    }
                 } else {
                     std::cerr << "Diretório não encontrado ou não é um diretório.\n";
                 }
