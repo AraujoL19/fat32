@@ -80,6 +80,33 @@ std::vector<DirEntry> list_directory(uint16_t cluster_id) {
     return entries;
 }
 
+bool remove_directory(const std::string& name, uint16_t parent_cluster) {
+    auto entry = find_entry(name, parent_cluster);
+    if (!entry.has_value()) {
+        std::cerr << "Diretório não encontrado.\n";
+        return false;
+    }
+
+    if (entry->attributes != 0x01) {
+        std::cerr << "Erro: não é um diretório.\n";
+        return false;
+    }
+
+    // Verifica se o diretório está vazio
+    auto entries = list_directory(entry->first_block);
+    if (!entries.empty()) {
+        std::cerr << "Erro: diretório não está vazio.\n";
+        return false;
+    }
+
+    // Libera o cluster do diretório
+    fat[entry->first_block] = 0x0000;
+    save_fat();
+
+    // Remove a entrada do diretório pai
+    return remove_entry_from_directory(name, parent_cluster);
+}
+
 std::optional<DirEntry> find_entry(const std::string& name, uint16_t cluster_id) {
     DataCluster cluster;
     load_cluster(cluster_id, cluster);

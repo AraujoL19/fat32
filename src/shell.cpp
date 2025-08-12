@@ -121,12 +121,25 @@ void shell_loop() {
             std::string name;
             iss >> name;
             if (name.empty()) {
-                std::cerr << "Uso: rm <nome>\n";
+                std::cerr << "Uso: rm <arquivo>\n";
                 continue;
             }
 
             if (!delete_file(name, get_current_cluster())) {
                 std::cerr << "Erro ao remover arquivo.\n";
+            }
+        }
+
+        else if(cmd == "rmdir"){
+            std::string name;
+            iss >> name;
+            if(name.empty()){
+                std::cerr<<"Uso: rmdir <diretorio>\n";
+                continue;
+            }
+
+            if(!remove_directory(name, get_current_cluster())){
+                std::cerr << "Erro ao remover diretorio.\n";
             }
         }
 

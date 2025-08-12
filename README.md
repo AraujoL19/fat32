@@ -50,7 +50,8 @@ No prompt `FAT32>`, você pode usar os seguintes comandos:
 | Comando                  | Descrição                                                    |
 |--------------------------|--------------------------------------------------------------|
 | `ls`                     | Lista os arquivos e diretórios no diretório atual.           |
-| `mkdir <nome>`           | Cria um novo diretório com o nome especificado.              |
+| `mkdir <diretorio>`      | Cria um novo diretório com o nome especificado.              |
+| `rmdir <diretorio>`      | Remove um subdiretório vazio do diretório atual.             |
 | `touch <nome>`           | Cria um novo arquivo vazio com o nome especificado.          |
 | `write <nome> <conteúdo>`| Escreve `<conteúdo>` no arquivo `<nome>`. Sobrescreve o arquivo se ele já existir. |
 | `read <nome>`            | Lê e exibe o conteúdo do arquivo especificado.               |
