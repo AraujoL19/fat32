@@ -13,6 +13,9 @@ bool create_directory(const std::string& dirname, uint16_t parent_cluster);
 // Lista todas as entradas de um diretório
 std::vector<DirEntry> list_directory(uint16_t cluster_index);
 
+// Remove um diretório do nível atual
+bool remove_directory(const std::string& name, uint16_t parent_cluster);
+
 // Procura uma entrada de diretório por nome
 std::optional<DirEntry> find_entry(const std::string& name, uint16_t cluster_index);
 
