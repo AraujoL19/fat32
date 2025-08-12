@@ -5,9 +5,13 @@
 #include <iostream>
 
 bool create_directory(const std::string& dirname, uint16_t parent_cluster) {
+    if (find_entry(dirname, parent_cluster).has_value()) {
+        std::cerr << "Já existe um arquivo ou diretório com esse nome.\n";
+        return false;
+    }
+
     DirEntry new_dir = {};
     std::strncpy(new_dir.filename, dirname.c_str(), sizeof(new_dir.filename) - 1);
-    new_dir.filename[sizeof(new_dir.filename) - 1] = '\0';
     new_dir.attributes = 0x01; // diretório
     new_dir.size = 0;
 
@@ -35,7 +39,7 @@ std::vector<DirEntry> list_directory(uint16_t cluster_id) {
     load_cluster(cluster_id, cluster);
 
     for (const DirEntry& entry : cluster.dir) {
-        if (entry.filename[0] != '\0') {
+        if (entry.filename[0] != '\0' && fat[entry.first_block] != 0x0000) {
             entries.push_back(entry);
         }
     }
