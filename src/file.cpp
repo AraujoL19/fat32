@@ -7,7 +7,7 @@
 
 bool create_file(const std::string& filename, uint16_t parent_cluster) {
     if (find_entry(filename, parent_cluster).has_value()) {
-        std::cerr << "Arquivo já existe.\n";
+        std::cerr << "Já existe um arquivo ou diretório com esse nome.\n";
         return false;
     }
 
@@ -37,9 +37,14 @@ bool write_file(const std::string& filename, const std::vector<char>& data, uint
     }
 
     DirEntry entry = opt_entry.value();
+    if (entry.attributes != 0x02) {
+        std::cerr << "Erro: não é possível escrever em um diretório.\n";
+        return false;
+    }
+
     int current = entry.first_block;
 
-    // Limpa os clusters anteriores
+    // Limpa clusters antigos
     while (fat[current] != 0xFFFF) {
         int next = fat[current];
         fat[current] = 0x0000;
@@ -79,7 +84,7 @@ bool write_file(const std::string& filename, const std::vector<char>& data, uint
     entry.first_block = static_cast<uint16_t>(first_cluster);
     entry.size = data.size();
 
-    // Atualiza entrada no diretório
+    // Atualiza entrada
     remove_entry_from_directory(filename, parent_cluster);
     add_entry_to_directory(entry, parent_cluster);
     save_fat();
@@ -92,6 +97,11 @@ std::optional<std::vector<char>> read_file(const std::string& filename, uint16_t
     if (!opt_entry.has_value()) return std::nullopt;
 
     DirEntry entry = opt_entry.value();
+    if (entry.attributes != 0x02) {
+        std::cerr << "Erro: não é um arquivo.\n";
+        return std::nullopt;
+    }
+
     std::vector<char> buffer;
     int current = entry.first_block;
     size_t total = 0;
@@ -115,8 +125,12 @@ bool delete_file(const std::string& filename, uint16_t parent_cluster) {
     if (!opt_entry.has_value()) return false;
 
     DirEntry entry = opt_entry.value();
-    int current = entry.first_block;
+    if (entry.attributes != 0x02) {
+        std::cerr << "Erro: não é um arquivo.\n";
+        return false;
+    }
 
+    int current = entry.first_block;
     while (current != 0xFFFF) {
         int next = fat[current];
         fat[current] = 0x0000;

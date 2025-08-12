@@ -1,14 +1,26 @@
 #include "shell.hpp"
+#include "cluster.hpp"
 #include "fat_manager.hpp"
 #include "directory.hpp"
 #include "file.hpp"
+#include "fat.hpp"
+
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <string>
+#include <cstring>
 
 static std::vector<std::pair<std::string, uint16_t>> dir_stack = {{"", 9}}; // "" representa a raiz
 
-uint16_t& current_cluster = dir_stack.back().second;
+// Remove a referência global e substitui por funções de acesso
+uint16_t get_current_cluster() {
+    return dir_stack.back().second;
+}
+
+void update_current_path(const std::string& name, uint16_t cluster) {
+    dir_stack.emplace_back(name, cluster);
+}
 
 std::string get_current_path() {
     std::string path = "/";
@@ -19,7 +31,6 @@ std::string get_current_path() {
     }
     return path;
 }
-
 
 void shell_loop() {
     std::string command;
@@ -35,10 +46,17 @@ void shell_loop() {
         if (cmd == "exit") break;
 
         else if (cmd == "ls") {
-            auto entries = list_directory(current_cluster);
-            for (const auto& e : entries) {
-                std::cout << (e.attributes == 0x01 ? "[DIR] " : "[FILE] ");
-                std::cout << e.filename << " (" << e.size << " bytes)\n";
+            auto entries = list_directory(get_current_cluster());
+            if (entries.empty()) {
+                std::cout << "";
+            } else {
+                for (const auto& e : entries) {
+                    // Verificação final de segurança
+                    if (strcmp(e.filename, ".") != 0 && strcmp(e.filename, "..") != 0) {
+                        std::cout << (e.attributes == 0x01 ? "[DIR] " : "[FILE] ");
+                        std::cout << e.filename << " (" << e.size << " bytes)\n";
+                    }
+                }
             }
         }
 
@@ -49,7 +67,7 @@ void shell_loop() {
                 std::cerr << "Uso: mkdir <nome>\n";
                 continue;
             }
-            if (!create_directory(name, current_cluster)) {
+            if (!create_directory(name, get_current_cluster())) {
                 std::cerr << "Erro ao criar diretório.\n";
             }
         }
@@ -61,7 +79,7 @@ void shell_loop() {
                 std::cerr << "Uso: touch <nome>\n";
                 continue;
             }
-            if (!create_file(name, current_cluster)) {
+            if (!create_file(name, get_current_cluster())) {
                 std::cerr << "Erro ao criar arquivo.\n";
             }
         }
@@ -75,10 +93,10 @@ void shell_loop() {
                 continue;
             }
 
-            if (!content.empty() && content[0] == ' ') content = content.substr(1); // remove espaço inicial
+            if (!content.empty() && content[0] == ' ') content = content.substr(1);
             std::vector<char> data(content.begin(), content.end());
 
-            if (!write_file(name, data, current_cluster)) {
+            if (!write_file(name, data, get_current_cluster())) {
                 std::cerr << "Erro ao escrever no arquivo.\n";
             }
         }
@@ -91,7 +109,7 @@ void shell_loop() {
                 continue;
             }
 
-            auto data = read_file(name, current_cluster);
+            auto data = read_file(name, get_current_cluster());
             if (data) {
                 std::cout << std::string(data->begin(), data->end()) << "\n";
             } else {
@@ -107,7 +125,7 @@ void shell_loop() {
                 continue;
             }
 
-            if (!delete_file(name, current_cluster)) {
+            if (!delete_file(name, get_current_cluster())) {
                 std::cerr << "Erro ao remover arquivo.\n";
             }
         }
@@ -121,21 +139,24 @@ void shell_loop() {
             }
 
             if (name == "..") {
-                if(dir_stack.size() > 1){
+                if (dir_stack.size() > 1) {
                     dir_stack.pop_back();
-                }else{
-                    std::cout<<"Você já está no diretório raiz/\n";
                 }
             } else {
-                auto entry = find_entry(name, current_cluster);
+                auto entry = find_entry(name, get_current_cluster());
                 if (entry && entry->attributes == 0x01) {
-                    dir_stack.emplace_back(name, entry->first_block);
+                    if (strcmp(entry->filename, ".") != 0 && strcmp(entry->filename, "..") != 0) {
+                        if (entry->first_block >= 10 && entry->first_block < NUM_CLUSTERS) {
+                            update_current_path(name, entry->first_block);
+                        } else {
+                            std::cerr << "Erro: cluster do diretório inválido.\n";
+                        }
+                    }
                 } else {
-                    std::cerr << "Diretório não encontrado ou não é um diretório.\n";
+                    std::cerr << "Diretório não encontrado.\n";
                 }
             }
         }
-
         else {
             std::cerr << "Comando não reconhecido.\n";
         }
